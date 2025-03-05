@@ -57,11 +57,11 @@ def fetch_who_recommendations():
             if response.ok:
                 soup = BeautifulSoup(response.text, "html.parser")
                 summary = "\n".join(p.get_text() for p in soup.find_all("p")[:3])
-                recommendations.append(f"🌍 {topic} Recommendations:\n{summary}\nMore details: {url}\n")
+                recommendations.append(f" {topic} Recommendations:\n{summary}\nMore details: {url}\n")
             else:
-                recommendations.append(f"🌍 {topic} Recommendations: Unable to retrieve. Visit: {url}\n")
+                recommendations.append(f" {topic} Recommendations: Unable to retrieve. Visit: {url}\n")
         except:
-            recommendations.append(f"🌍 {topic} Recommendations: Error fetching data. Visit: {url}\n")
+            recommendations.append(f" {topic} Recommendations: Error fetching data. Visit: {url}\n")
     return "\n".join(recommendations)
 
 # Define Workflow Functions
