@@ -13,7 +13,7 @@ This project is a Personal Healthcare Assistant powered by Retrieval-Augmented G
 
 * Human-in-the-Loop Feedback: Users can provide feedback to modify their plans.
 
-* API Key Management: Supports .env files for OpenAI API key management.
+* API Key Management: Supports .env files for GROQ API key management.
 
 
 ### Technologies Used
@@ -24,7 +24,7 @@ This project is a Personal Healthcare Assistant powered by Retrieval-Augmented G
 
 * LangChain & LangGraph (for RAG-based processing)
 
-* OpenAI API (for generating health plans)
+* GROQ API (for generating health plans)
 
 * BeautifulSoup & Requests (for WHO data retrieval)
 

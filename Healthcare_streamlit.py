@@ -5,7 +5,8 @@ import langgraph
 import langsmith
 import faiss
 import streamlit as st
-from langchain_openai import ChatOpenAI
+#from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph
 from pydantic import BaseModel
 from langchain.schema import AIMessage
@@ -16,17 +17,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Fetch API Key
-openai_api_key = os.getenv("OPENAI_API_KEY")
-if not openai_api_key:
-    st.error("Missing OpenAI API Key. Ensure it is set in the .env file or enter it below.")
-    openai_api_key = st.text_input("Enter OpenAI API Key:", type="password")
-    if openai_api_key:
-        os.environ["OPENAI_API_KEY"] = openai_api_key
-    else:
-        st.stop()
+#openai_api_key = os.getenv("OPENAI_API_KEY")
+os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
 # Initialize LLM
-llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+#llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+llm = ChatGroq(model="qwen-2.5-32b", temperature=0.7)
 
 # WHO URLs for Health & Nutrition
 who_urls = {
@@ -40,6 +36,7 @@ who_urls = {
 class HealthQueryState(BaseModel):
     gender: str
     weight: float
+    target_weight: float
     height: float
     lifestyle: str
     meal_preferences: str
@@ -72,7 +69,9 @@ def retrieve_information(state: HealthQueryState):
     prompt = f"""
     Generate a personalized health plan for a {state.gender} weighing {state.weight}kg, {state.height}cm tall,
     following a {state.lifestyle} lifestyle. The user prefers {state.meal_preferences} meals and aims for {state.fitness_goals}.
-    Provide a complete diet and activity schedule with a timeline.
+    
+    The target weight is {state.target_weight}kg. Adjust the diet and workout plan accordingly.
+    Provide a detailed schedule with estimated timeframes for achieving the target weight.
     """
     llm_response = llm.invoke(prompt)
     state.personalized_plan = llm_response.content if isinstance(llm_response, AIMessage) else str(llm_response)
@@ -115,6 +114,7 @@ st.session_state.setdefault("user_feedback", "")
 # User Inputs
 gender = st.selectbox("Select Gender", ["Male", "Female", "Other"])
 weight = st.number_input("Enter your weight (kg)", 30.0, 200.0, step=0.1)
+target_weight = st.number_input("Enter your target weight (kg)", 30.0, 200.0, step=0.1)
 height = st.number_input("Enter your height (cm)", 100.0, 250.0, step=0.1)
 lifestyle = st.selectbox("Select Your Lifestyle", ["Sedentary", "Lightly Active", "Moderately Active", "Very Active"])
 meal_preferences = st.selectbox("Select Your Meal Preference", ["Vegetarian", "Non-Vegetarian", "Vegan", "Keto", "Mediterranean"])
@@ -122,7 +122,7 @@ fitness_goals = st.selectbox("Select Your Fitness Goal", ["Weight Loss", "Muscle
 
 if st.button("Generate Plan"):
     user_state = HealthQueryState(
-        gender=gender, weight=weight, height=height,
+        gender=gender, weight=weight, target_weight=target_weight, height=height,
         lifestyle=lifestyle, meal_preferences=meal_preferences, fitness_goals=fitness_goals
     )
     st.session_state.response_state = HealthQueryState(**dict(app.invoke(user_state)))
