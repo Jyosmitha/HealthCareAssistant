@@ -1,15 +1,28 @@
-import os 
+import os
 import openai
 import requests
 import langgraph
 import langsmith
 import faiss
 import streamlit as st
+#from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph
 from pydantic import BaseModel
 from langchain.schema import AIMessage
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Fetch API Key
+#openai_api_key = os.getenv("OPENAI_API_KEY")
+os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
+
+# Initialize LLM
+#llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+llm = ChatGroq(model="qwen-2.5-32b", temperature=0.7)
 
 # WHO URLs for Health & Nutrition
 who_urls = {
@@ -21,7 +34,6 @@ who_urls = {
 
 # Define State Schema
 class HealthQueryState(BaseModel):
-    groq_api_key: str
     gender: str
     weight: float
     target_weight: float
@@ -54,10 +66,10 @@ def analyze_query(state: HealthQueryState):
     return state
 
 def retrieve_information(state: HealthQueryState):
-    llm = ChatGroq(model="qwen-2.5-32b", temperature=0.7, groq_api_key=state.groq_api_key)
     prompt = f"""
     Generate a personalized health plan for a {state.gender} weighing {state.weight}kg, {state.height}cm tall,
     following a {state.lifestyle} lifestyle. The user prefers {state.meal_preferences} meals and aims for {state.fitness_goals}.
+    
     The target weight is {state.target_weight}kg. Adjust the diet and workout plan accordingly.
     Provide a detailed schedule with estimated timeframes for achieving the target weight.
     """
@@ -71,7 +83,6 @@ def external_knowledge(state: HealthQueryState):
 
 def human_feedback(state: HealthQueryState):
     if state.user_feedback:
-        llm = ChatGroq(model="qwen-2.5-32b", temperature=0.7, groq_api_key=state.groq_api_key)
         prompt = f"Modify the following health plan based on user feedback:\n\nUser Feedback: {state.user_feedback}\n\nOriginal Plan:\n{state.personalized_plan}"
         llm_response = llm.invoke(prompt)
         state.personalized_plan = llm_response.content if isinstance(llm_response, AIMessage) else str(llm_response)
@@ -96,9 +107,6 @@ app = create_healthcare_rag_workflow()
 st.title("🏋️ Personal Healthcare Assistant with RAG & WHO Recommendations")
 st.subheader("Generate a Personalized Diet & Activity Plan")
 
-# User Input for API Key
-groq_api_key = st.text_input("Enter your GROQ API Key", type="password")
-
 # Session state
 st.session_state.setdefault("response_state", None)
 st.session_state.setdefault("user_feedback", "")
@@ -113,14 +121,11 @@ meal_preferences = st.selectbox("Select Your Meal Preference", ["Vegetarian", "N
 fitness_goals = st.selectbox("Select Your Fitness Goal", ["Weight Loss", "Muscle Gain", "General Fitness", "Endurance Training"])
 
 if st.button("Generate Plan"):
-    if not groq_api_key:
-        st.error("Please enter a valid GROQ API Key.")
-    else:
-        user_state = HealthQueryState(
-            groq_api_key=groq_api_key, gender=gender, weight=weight, target_weight=target_weight, height=height,
-            lifestyle=lifestyle, meal_preferences=meal_preferences, fitness_goals=fitness_goals
-        )
-        st.session_state.response_state = HealthQueryState(**dict(app.invoke(user_state)))
+    user_state = HealthQueryState(
+        gender=gender, weight=weight, target_weight=target_weight, height=height,
+        lifestyle=lifestyle, meal_preferences=meal_preferences, fitness_goals=fitness_goals
+    )
+    st.session_state.response_state = HealthQueryState(**dict(app.invoke(user_state)))
 
 if st.session_state.response_state:
     st.subheader("📋 Your Personalized Health Plan")
