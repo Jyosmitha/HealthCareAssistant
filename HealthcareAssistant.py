@@ -22,7 +22,7 @@ os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
 # Initialize LLM
 #llm = ChatOpenAI(model="gpt-4", temperature=0.7)
-llm = ChatGroq(model="qwen-2.5-32b", temperature=0.7)
+llm = ChatGroq(model="mistral-saba-24b", temperature=0.7)
 
 # WHO URLs for Health & Nutrition
 who_urls = {
