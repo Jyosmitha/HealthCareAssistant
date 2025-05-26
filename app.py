@@ -54,7 +54,7 @@ def analyze_query(state: HealthQueryState):
     return state
 
 def retrieve_information(state: HealthQueryState):
-    llm = ChatGroq(model="qwen-2.5-32b", temperature=0.7, groq_api_key=state.groq_api_key)
+    llm = ChatGroq(model="mistral-saba-24b", temperature=0.7, groq_api_key=state.groq_api_key)
     prompt = f"""
     Generate a personalized health plan for a {state.gender} weighing {state.weight}kg, {state.height}cm tall,
     following a {state.lifestyle} lifestyle. The user prefers {state.meal_preferences} meals and aims for {state.fitness_goals}.
@@ -71,7 +71,7 @@ def external_knowledge(state: HealthQueryState):
 
 def human_feedback(state: HealthQueryState):
     if state.user_feedback:
-        llm = ChatGroq(model="qwen-2.5-32b", temperature=0.7, groq_api_key=state.groq_api_key)
+        llm = ChatGroq(model="mistral-saba-24b", temperature=0.7, groq_api_key=state.groq_api_key)
         prompt = f"Modify the following health plan based on user feedback:\n\nUser Feedback: {state.user_feedback}\n\nOriginal Plan:\n{state.personalized_plan}"
         llm_response = llm.invoke(prompt)
         state.personalized_plan = llm_response.content if isinstance(llm_response, AIMessage) else str(llm_response)
